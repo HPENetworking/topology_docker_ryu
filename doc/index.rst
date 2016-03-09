@@ -2,6 +2,7 @@
    :hidden:
 
    developer
+   ryu
    topology_docker_ryu/topology_docker_ryu
 
 ============================
@@ -14,6 +15,7 @@ A Topology Ryu Node for topology_docker.
 Documentation
 =============
 
+- :doc:`Node documentation. <ryu>`
 - :doc:`Developer Guide. <developer>`
 - :doc:`Internal Documentation Reference. <topology_docker_ryu/topology_docker_ryu>`
 
