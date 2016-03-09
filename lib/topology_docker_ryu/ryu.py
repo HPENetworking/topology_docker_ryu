@@ -24,10 +24,10 @@ Custom Topology Docker Node for Ryu SND controller.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-from os import path
 from time import sleep
 from shutil import copy
 from subprocess import Popen
+from os.path import basename, join
 from shlex import split as shsplit
 
 from topology_docker.node import DockerNode
@@ -48,11 +48,16 @@ class RyuNode(DockerNode):
     - https://github.com/osrg/dockerfiles/blob/master/ryu/Dockerfile
 
     See :class:`topology_docker.node.DockerNode`.
+
+    :param str app: Path the to ``.py`` application that Ryu needs to run.
+    :param bool autostart: Automatically start the application once the
+     topology is built.
     """
 
     def __init__(
             self, identifier,
             image='topology/ryu:latest', binds=None,
+            app=None, autostart=True,
             **kwargs):
 
         # Determine shared directory
@@ -72,21 +77,28 @@ class RyuNode(DockerNode):
             **kwargs
         )
 
-        # Supervisor daemon
-        self._supervisord = None
-
         # Save location of the shared dir in host
         self.shared_dir = shared_dir
 
-        # Copy the ryu app into the container
-        self.app_name = self.metadata.get('app', None)
-        if self.app_name is not None:
-            copy(self.app_name, self.shared_dir)
+        # Determine app to run
+        if app is None:
+            app = '/root/ryu-master/ryu/app/simple_switch.py'
+        else:
+            # Copy the ryu app into the container
+            copy(app, self.shared_dir)
+            app = join('/tmp', basename(app))
+        self.app = app
 
         # Add bash shell
         self._shells['bash'] = DockerBashShell(
             self.container_id, 'bash'
         )
+
+        # Save autostart option
+        self._autostart = autostart
+
+        # Supervisor daemon
+        self._supervisord = None
 
     def notify_post_build(self):
         """
@@ -107,43 +119,38 @@ class RyuNode(DockerNode):
         #. Run ryu-manager
         """
 
-        # Ryu should be started by Topology
-        if self.metadata.get('autostart', True):
+        # Check if ryu should be started by Topology
+        if not self._autostart:
+            return
 
-            # Get the app file (or default)
-            if self.app_name is not None:
-                app_path = '/tmp/' + path.basename(self.app_name)
+        # run ryu app using ryu-manager
+        self._supervisord = Popen(shsplit(
+            'docker exec {} '
+            'sh -c "RYU_COMMAND=\'/root/ryu-master/bin/ryu-manager {} '
+            '--verbose\' supervisord"'.format(
+                self.container_id,
+                self.app
+            )
+        ))
+
+        # Wait for ryu-manager to start
+        config_timeout = 100
+        i = 0
+        while i < config_timeout:
+            config_status = self._docker_exec(
+                'supervisorctl status ryu-manager'
+            )
+
+            if 'RUNNING' not in config_status:
+                sleep(0.1)
             else:
-                app_path = '/root/ryu-master/ryu/app/simple_switch.py'
+                break
+            i += 1
 
-            # run ryu app using ryu-manager
-            self._supervisord = Popen(shsplit(
-                'docker exec {} '
-                'sh -c "RYU_COMMAND=\'/root/ryu-master/bin/ryu-manager {} '
-                '--verbose\' supervisord"'.format(
-                    self.container_id,
-                    app_path
-                )
-            ))
-
-            # Wait for ryu-manager to start
-            config_timeout = 100
-            i = 0
-            while i < config_timeout:
-                config_status = self._docker_exec(
-                    'supervisorctl status ryu-manager'
-                )
-
-                if 'RUNNING' not in config_status:
-                    sleep(0.1)
-                else:
-                    break
-                i += 1
-
-            if i == config_timeout:
-                raise RuntimeError(
-                    'ryu-manager did not reach RUNNING state on supervisor!'
-                )
+        if i == config_timeout:
+            raise RuntimeError(
+                'ryu-manager did not reach RUNNING state on supervisor!'
+            )
 
 
 __all__ = ['RyuNode']
