@@ -35,7 +35,7 @@ from topology_docker.utils import ensure_dir
 from topology_docker.shell import DockerBashShell
 
 
-class RyuControllerNode(DockerNode):
+class RyuNode(DockerNode):
     """
     Custom Ryu SDN controller node capable of running custom apps.
 
@@ -66,7 +66,7 @@ class RyuControllerNode(DockerNode):
         if binds is not None:
             container_binds.append(binds)
 
-        super(RyuControllerNode, self).__init__(
+        super(RyuNode, self).__init__(
             identifier,
             image=image, binds=';'.join(container_binds),
             **kwargs
@@ -96,7 +96,7 @@ class RyuControllerNode(DockerNode):
         See :meth:`DockerNode.notify_post_build` for more information.
         """
 
-        super(RyuControllerNode, self).notify_post_build()
+        super(RyuNode, self).notify_post_build()
         self._setup_system()
 
     def _setup_system(self):
@@ -146,4 +146,4 @@ class RyuControllerNode(DockerNode):
                 )
 
 
-__all__ = ['RyuControllerNode']
+__all__ = ['RyuNode']

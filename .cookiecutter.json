@@ -1,0 +1,14 @@
+{
+    "node_name": "ryu",
+    "platform_engine_name": "topology_docker",
+    "class_name": "RyuNode",
+    "default_docker_image": "your_default_docker_image",
+    "author": "Hewlett Packard Enterprise Development LP",
+    "email": "hpe-networking@lists.hp.com",
+    "repo_url": "https://github.com/HPENetworking/topology_docker_ryu",
+    "doc_url": "https://github.com/HPENetworking/topology_docker_ryu/tree/master/doc",
+    "project_name": "ryu node for topology_docker",
+    "short_description": "A Topology Ryu Node for topology_docker.",
+    "year": "2016",
+    "version": "0.1.0"
+}
