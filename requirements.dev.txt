@@ -6,3 +6,6 @@ sphinx
 sphinx_rtd_theme
 sphinxcontrib-plantuml
 autoapi
+topology_lib_ping
+
+-e git+https://github.com/HPENetworking/topology_docker_openvswitch.git@c9c016effad79c8cebebfef98b472b21e082206b#egg=topology_docker_openvswitch
