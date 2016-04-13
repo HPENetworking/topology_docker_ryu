@@ -31,7 +31,6 @@ from os.path import basename, join
 from shlex import split as shsplit
 
 from topology_docker.node import DockerNode
-from topology_docker.utils import ensure_dir
 from topology_docker.shell import DockerBashShell
 
 
@@ -56,29 +55,11 @@ class RyuNode(DockerNode):
 
     def __init__(
             self, identifier,
-            image='topology/ryu:latest', binds=None,
+            image='topology/ryu:latest',
             app=None, autostart=True,
             **kwargs):
 
-        # Determine shared directory
-        shared_dir = '/tmp/topology_{}_{}'.format(identifier, str(id(self)))
-        ensure_dir(shared_dir)
-
-        # Add binded directories
-        container_binds = [
-            '{}:/tmp'.format(shared_dir)
-        ]
-        if binds is not None:
-            container_binds.append(binds)
-
-        super(RyuNode, self).__init__(
-            identifier,
-            image=image, binds=';'.join(container_binds),
-            **kwargs
-        )
-
-        # Save location of the shared dir in host
-        self.shared_dir = shared_dir
+        super(RyuNode, self).__init__(identifier, image=image, **kwargs)
 
         # Determine app to run
         if app is None:
